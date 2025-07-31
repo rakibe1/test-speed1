@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/auth/user-menu"
-import { Zap } from "lucide-react"
 
 export function Header() {
   const { data: session } = useSession()
@@ -13,21 +12,22 @@ export function Header() {
   return (
     <header className="border-b">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2">
-          <Zap className="h-6 w-6" />
-          <span className="font-bold text-xl">KTSC Speed Test</span>
+        <Link href="/" className="text-2xl font-bold">
+          KTSC Speed Test
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6">
-          <Link href="/" className="text-sm font-medium hover:underline">
+          <Link href="/" className="hover:text-primary">
             Home
           </Link>
-          <Link href="/about" className="text-sm font-medium hover:underline">
+          <Link href="/about" className="hover:text-primary">
             About
           </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline">
-            Contact
-          </Link>
+          {session && (
+            <Link href="/dashboard" className="hover:text-primary">
+              Dashboard
+            </Link>
+          )}
         </nav>
 
         <div className="flex items-center space-x-4">
@@ -35,9 +35,9 @@ export function Header() {
           {session ? (
             <UserMenu />
           ) : (
-            <Button asChild>
-              <Link href="/auth/signin">Sign In</Link>
-            </Button>
+            <Link href="/auth/signin">
+              <Button variant="outline">Sign In</Button>
+            </Link>
           )}
         </div>
       </div>

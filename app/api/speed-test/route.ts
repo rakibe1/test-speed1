@@ -50,7 +50,6 @@ async function updateSystemStats() {
 }
 
 export async function GET(request: NextRequest) {
-  // Removed getServerSession(authOptions) to allow public access
   const encoder = new TextEncoder()
   const customReadable = new ReadableStream({
     async start(controller) {
@@ -65,7 +64,7 @@ export async function GET(request: NextRequest) {
         const realIp = request.headers.get("x-real-ip")
         const ipAddress = forwardedFor?.split(",")[0] || realIp || request.ip
 
-        sendEvent({ status: "starting", message: "Initializing speed test..." })
+        sendEvent({ type: "starting" })
 
         const speedtest = new Speedtest({
           token: process.env.SPEEDTEST_API_TOKEN || "YOUR_SPEEDTEST_API_TOKEN", // Replace with your token if needed
@@ -74,7 +73,9 @@ export async function GET(request: NextRequest) {
           // You can specify a server here if needed, e.g., serverId: 1234
         })
 
-        sendEvent({ status: "testing", message: "Running speed test..." })
+        setTimeout(() => {
+          sendEvent({ type: "testing" })
+        }, 1000)
 
         const data = await speedtest.getSpeed()
 
@@ -88,8 +89,9 @@ export async function GET(request: NextRequest) {
         }
 
         const results = {
-          downloadSpeed: Number.parseFloat(finalDownload.toFixed(2)),
-          uploadSpeed: Number.parseFloat(finalUpload.toFixed(2)),
+          type: "finished",
+          download: Number.parseFloat(finalDownload.toFixed(2)),
+          upload: Number.parseFloat(finalUpload.toFixed(2)),
           ping: Math.round(finalPing),
           serverInfo: data.server
             ? {
@@ -109,8 +111,8 @@ export async function GET(request: NextRequest) {
           const speedTestRecord = await prisma.speedTest.create({
             data: {
               userId: null, // Set to null for public tests
-              downloadSpeed: results.downloadSpeed,
-              uploadSpeed: results.uploadSpeed,
+              downloadSpeed: results.download,
+              uploadSpeed: results.upload,
               ping: results.ping,
               serverInfo: results.serverInfo ? JSON.stringify(results.serverInfo) : null,
               location: results.serverInfo?.location || null,
@@ -119,21 +121,21 @@ export async function GET(request: NextRequest) {
             },
           })
           sendEvent({
-            status: "finished",
-            results: { ...results, id: speedTestRecord.id, timestamp: speedTestRecord.createdAt },
-            message: "Speed test completed!", // Message simplified as session is not checked
+            ...results,
+            id: speedTestRecord.id,
+            timestamp: speedTestRecord.createdAt,
           })
           // Update system stats (async)
           updateSystemStats().catch(console.error)
         } catch (dbError) {
           console.error("Failed to save speed test to DB:", dbError)
-          sendEvent({ status: "error", message: "Failed to save test results to database." })
+          sendEvent({ type: "error", message: "Failed to save test results to database." })
         } finally {
           controller.close()
         }
       } catch (error: any) {
         console.error("API route error:", error)
-        sendEvent({ status: "error", message: error.message || "Internal server error during test initiation." })
+        sendEvent({ type: "error", message: error.message || "Internal server error during test initiation." })
         controller.close()
       }
     },

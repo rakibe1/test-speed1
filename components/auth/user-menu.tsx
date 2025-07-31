@@ -1,6 +1,7 @@
 "use client"
 
 import { signOut, useSession } from "next-auth/react"
+import { User, Settings, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { User, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
 
 export function UserMenu() {
@@ -25,9 +25,7 @@ export function UserMenu() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src={session.user.image || ""} alt={session.user.name || ""} />
-            <AvatarFallback>
-              <User className="h-4 w-4" />
-            </AvatarFallback>
+            <AvatarFallback>{session.user.name?.charAt(0) || session.user.email?.charAt(0)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -42,19 +40,19 @@ export function UserMenu() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard">
             <User className="mr-2 h-4 w-4" />
-            Dashboard
+            <span>Dashboard</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/dashboard/settings">
             <Settings className="mr-2 h-4 w-4" />
-            Settings
+            <span>Settings</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut()}>
+        <DropdownMenuItem className="cursor-pointer" onSelect={() => signOut()}>
           <LogOut className="mr-2 h-4 w-4" />
-          Log out
+          <span>Log out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
