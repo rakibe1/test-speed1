@@ -1,5 +1,5 @@
 import { LRUCache } from "lru-cache"
-import type { NextResponse } from "next/server"
+import type { NextRequest } from "next/server"
 
 type Options = {
   uniqueTokenPerInterval?: number
@@ -13,20 +13,20 @@ export function rateLimit(options?: Options) {
   })
 
   return {
-    check: (res: NextResponse, limit: number, token: string) => {
-      const tokenCount = (tokenCache.get(token) as number[]) || [0]
-      if (tokenCount[0] === 0) {
-        tokenCache.set(token, tokenCount)
-      }
-      tokenCount[0] += 1
+    check: (res: NextRequest, limit: number, token: string) =>
+      new Promise<boolean>((resolve, reject) => {
+        const tokenCount = (tokenCache.get(token) as number[]) || [0]
+        if (tokenCount[0] === 0) {
+          tokenCache.set(token, tokenCount)
+        }
+        tokenCount[0] += 1
 
-      const currentUsage = tokenCount[0]
-      const isRateLimited = currentUsage >= limit
+        const currentUsage = tokenCount[0]
+        const isRateLimited = currentUsage >= limit
+        res.headers.set("X-RateLimit-Limit", String(limit))
+        res.headers.set("X-RateLimit-Remaining", String(Math.max(0, limit - currentUsage)))
 
-      res.headers.set("X-RateLimit-Limit", limit.toString())
-      res.headers.set("X-RateLimit-Remaining", isRateLimited ? "0" : (limit - currentUsage).toString())
-
-      return isRateLimited
-    },
+        return isRateLimited ? reject() : resolve(true)
+      }),
   }
 }

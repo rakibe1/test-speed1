@@ -145,13 +145,16 @@ export function useSpeedTest() {
     }
     setState("idle")
     setProgress(0)
-    setCurrentValues({ download: 0, upload: 0, ping: 0 }) // Reset current values
-    setFinalResults(null) // Clear final results on stop
+    setCurrentValues({ download: 0, upload: 0, ping: 0 })
+    setFinalResults(null)
     toast.info("Speed test stopped.")
   }, [])
 
   const resetTest = useCallback(() => {
-    stopTest()
+    stopTest() // Stop any ongoing test and reset state
+    setState("idle")
+    setProgress(0)
+    setCurrentValues({ download: 0, upload: 0, ping: 0 })
     setFinalResults(null)
   }, [stopTest])
 

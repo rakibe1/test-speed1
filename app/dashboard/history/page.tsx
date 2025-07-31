@@ -1,52 +1,32 @@
-import type { Metadata } from "next"
-import { getServerSession } from "next-auth"
-
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { SpeedHistory } from "@/components/speed-history"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "History",
-  description: "View your past speed test results.",
+export const metadata = {
+  title: "Test History - KTSC Speed Testing App",
+  description: "View your past internet speed test results.",
 }
 
 export default async function HistoryPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center p-4">
-        <h1 className="text-2xl font-bold">Access Denied</h1>
-        <p className="text-muted-foreground">Please sign in to view your speed test history.</p>
-      </div>
-    )
+  if (!session) {
+    redirect("/auth/signin")
   }
 
-  const userId = session.user.id
-
-  const speedTests = await prisma.speedTest.findMany({
-    where: {
-      userId: userId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 50, // Limit to last 50 tests
-  })
-
-  const formattedSpeedTests = speedTests.map((test) => ({
-    id: test.id,
-    timestamp: test.createdAt,
-    downloadSpeed: test.downloadSpeed,
-    uploadSpeed: test.uploadSpeed,
-    ping: test.ping,
-    serverInfo: test.serverInfo ? JSON.parse(test.serverInfo as string) : null,
-  }))
-
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-3xl font-bold">Speed Test History</h1>
-      <SpeedHistory initialHistory={formattedSpeedTests} />
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">Your Speed Test History</CardTitle>
+          <CardContent className="text-center text-gray-700 dark:text-gray-300">
+            Review your past internet speed test results.
+          </CardContent>
+        </CardHeader>
+      </Card>
+      <SpeedHistory />
     </div>
   )
 }

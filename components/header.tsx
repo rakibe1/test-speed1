@@ -1,87 +1,62 @@
-"use client"
-
 import Link from "next/link"
-import { Icons } from "@/components/icons"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { UserMenu } from "@/components/auth/user-menu"
 import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useSession } from "next-auth/react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { MenuIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from "lucide-react"
+import Image from "next/image"
 
 export function Header() {
-  const { data: session, status } = useSession()
-
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
-        <div className="flex gap-6 md:gap-10">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center space-x-4">
           <Link href="/" className="flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" />
-            <span className="inline-block font-bold">KTSC Speed Test</span>
+            <Image src="/placeholder-logo.svg" alt="KTSC Logo" width={32} height={32} />
+            <span className="font-bold text-lg">KTSC Speed Test</span>
           </Link>
-          <nav className="flex items-center space-x-4 text-sm font-medium">
-            <Link href="/articles" className="hover:text-primary">
-              Articles
-            </Link>
-            <Link href="/about" className="hover:text-primary">
+          <nav className="hidden md:flex items-center space-x-4">
+            <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
               About
             </Link>
-            <Link href="/contact" className="hover:text-primary">
+            <Link href="/articles" className="text-sm font-medium hover:underline underline-offset-4">
+              Articles
+            </Link>
+            <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
               Contact
             </Link>
-            {session?.user?.role === "ADMIN" && (
-              <Link href="/admin" className="hover:text-primary">
-                Admin
-              </Link>
-            )}
+            <Link href="/dashboard" className="text-sm font-medium hover:underline underline-offset-4">
+              Dashboard
+            </Link>
           </nav>
         </div>
-        <div className="flex flex-1 items-center justify-end space-x-4">
-          <nav className="flex items-center space-x-1">
-            <ThemeToggle />
-            {status === "loading" ? (
-              <Skeleton className="h-8 w-8 rounded-full" />
-            ) : session ? (
-              <UserMenu />
-            ) : (
-              <Button asChild size="sm">
-                <Link href="/auth/signin">Sign In</Link>
-              </Button>
-            )}
-          </nav>
+        <div className="flex items-center space-x-4">
+          <ThemeToggle />
+          <UserMenu />
           <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Toggle Menu</span>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <MenuIcon className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[250px] sm:w-[300px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col gap-4 pt-6">
-                <Link href="/" className="text-lg font-semibold">
+                <Link href="/" className="text-lg font-medium hover:underline underline-offset-4">
                   Home
                 </Link>
-                <Link href="/articles" className="text-lg font-semibold">
-                  Articles
-                </Link>
-                <Link href="/about" className="text-lg font-semibold">
+                <Link href="/about" className="text-lg font-medium hover:underline underline-offset-4">
                   About
                 </Link>
-                <Link href="/contact" className="text-lg font-semibold">
+                <Link href="/articles" className="text-lg font-medium hover:underline underline-offset-4">
+                  Articles
+                </Link>
+                <Link href="/contact" className="text-lg font-medium hover:underline underline-offset-4">
                   Contact
                 </Link>
-                {session?.user?.role === "ADMIN" && (
-                  <Link href="/admin" className="text-lg font-semibold">
-                    Admin
-                  </Link>
-                )}
-                {status !== "loading" && !session && (
-                  <Button asChild className="mt-4">
-                    <Link href="/auth/signin">Sign In</Link>
-                  </Button>
-                )}
+                <Link href="/dashboard" className="text-lg font-medium hover:underline underline-offset-4">
+                  Dashboard
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>

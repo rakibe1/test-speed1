@@ -40,25 +40,13 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  accounts      Account[]
-  sessions      Session[]
-  role          Role      @default(MEMBER)
-  speedTests    SpeedTest[]
-  articles      Article[]
-}
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  role          Role      @default(USER)
 
-enum Role {
-  USER
-  ADMIN
-  MEMBER
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
+  accounts   Account[]
+  sessions   Session[]
+  speedTests SpeedTest[]
 }
 
 model SpeedTest {
@@ -67,35 +55,34 @@ model SpeedTest {
   user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
   downloadSpeed Float
   uploadSpeed   Float
-  ping          Int
-  serverInfo    Json?
+  ping          Float
+  serverInfo    String?   @db.Text // Store as JSON string
   location      String?
   ipAddress     String?
   userAgent     String?
   createdAt     DateTime  @default(now())
 }
 
+model Article {
+  id        String    @id @default(cuid())
+  title     String
+  content   String    @db.Text
+  published Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model SystemStats {
-  date            DateTime @id @unique @db.Date
+  date            DateTime @id @db.Date
   totalTests      Int
   totalUsers      Int
   averageDownload Float?
   averageUpload   Float?
   averagePing     Float?
-  createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
-model Article {
-  id        String    @id @default(cuid())
-  title     String
-  content   String
-  published Boolean   @default(false)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  authorId  String
-  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  category  String?
-  readTime  String?
-  description String?
+enum Role {
+  USER
+  ADMIN
 }

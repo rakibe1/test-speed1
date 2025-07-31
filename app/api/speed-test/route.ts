@@ -105,10 +105,10 @@ export async function GET(request: NextRequest) {
 
         // Save speed test record to database
         try {
+          // Removed session check for saving to DB, userId is now null if no session
           const speedTestRecord = await prisma.speedTest.create({
             data: {
-              // userId is null if no session is present, which is now allowed
-              userId: null,
+              userId: null, // Set to null for public tests
               downloadSpeed: results.downloadSpeed,
               uploadSpeed: results.uploadSpeed,
               ping: results.ping,

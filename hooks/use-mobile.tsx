@@ -19,5 +19,20 @@ export function useMediaQuery(query: string) {
 }
 
 export function useIsMobile() {
-  return useMediaQuery("(max-width: 768px)") // Example breakpoint for mobile
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768) // Tailwind's 'md' breakpoint
+    }
+
+    checkMobile() // Check on mount
+    window.addEventListener("resize", checkMobile) // Add event listener for resize
+
+    return () => {
+      window.removeEventListener("resize", checkMobile) // Clean up on unmount
+    }
+  }, [])
+
+  return isMobile
 }

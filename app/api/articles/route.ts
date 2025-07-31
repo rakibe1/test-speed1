@@ -1,80 +1,36 @@
 import { NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import * as z from "zod"
-
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 
-const articleCreateSchema = z.object({
-  title: z.string().min(1),
-  content: z.string().min(1),
-  published: z.boolean().default(false),
-})
-
-export async function GET(req: Request) {
+// GET /api/articles
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url)
-    const searchQuery = searchParams.get("search") || ""
-
     const articles = await prisma.article.findMany({
-      where: {
-        published: true,
-        OR: [
-          {
-            title: {
-              contains: searchQuery,
-              mode: "insensitive",
-            },
-          },
-          {
-            content: {
-              contains: searchQuery,
-              mode: "insensitive",
-            },
-          },
-        ],
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      include: {
-        author: true,
-      },
+      orderBy: { createdAt: "desc" },
     })
-
     return NextResponse.json(articles)
   } catch (error) {
-    console.error(error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.error("Error fetching articles:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function POST(req: Request) {
+// POST /api/articles
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions)
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return new NextResponse("Unauthorized", { status: 403 })
-    }
-
-    const json = await req.json()
-    const body = articleCreateSchema.parse(json)
-
+    const { title, content, published } = await request.json()
     const newArticle = await prisma.article.create({
-      data: {
-        title: body.title,
-        content: body.content,
-        published: body.published,
-        authorId: session.user.id,
-      },
+      data: { title, content, published },
     })
-
     return NextResponse.json(newArticle, { status: 201 })
   } catch (error) {
-    console.error(error)
-    if (error instanceof z.ZodError) {
-      return new NextResponse(JSON.stringify(error.issues), { status: 422 })
-    }
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.error("Error creating article:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

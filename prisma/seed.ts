@@ -5,100 +5,110 @@ const prisma = new PrismaClient()
 async function main() {
   console.log("Seeding database...")
 
-  // Create some sample system stats
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  await prisma.systemStats.upsert({
-    where: { date: today },
-    update: {},
-    create: {
-      date: today,
-      totalTests: 1250,
-      totalUsers: 89,
-      averageDownload: 67.8,
-      averageUpload: 23.4,
-      averagePing: 28,
-    },
+  // Create a test user if not exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: "test@example.com" },
   })
 
-  // Create an admin user first (you'll need to sign in with Google first to get this user created)
-  // Then run this seed to update their role to ADMIN
-  console.log("Creating sample admin user...")
-
-  // Try to find an existing user to make admin, or create a placeholder
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      email: {
-        contains: "@",
-      },
-    },
-  })
-
-  let adminUserId: string
-
-  if (existingUser) {
-    // Update existing user to admin
-    const adminUser = await prisma.user.update({
-      where: { id: existingUser.id },
-      data: { role: "ADMIN" },
-    })
-    adminUserId = adminUser.id
-    console.log(`Updated user ${existingUser.email} to ADMIN role`)
-  } else {
-    // Create a placeholder admin user
-    const adminUser = await prisma.user.create({
+  if (!existingUser) {
+    await prisma.user.create({
       data: {
-        email: "admin@ktscspeed.com",
-        name: "KTSC Admin",
+        name: "Test User",
+        email: "test@example.com",
+        emailVerified: new Date(),
+        image: "/placeholder-user.jpg",
+        role: "USER",
+      },
+    })
+    console.log("Created test user: test@example.com")
+  } else {
+    console.log("Test user already exists.")
+  }
+
+  // Create an admin user if not exists
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: "admin@example.com" },
+  })
+
+  if (!existingAdmin) {
+    await prisma.user.create({
+      data: {
+        name: "Admin User",
+        email: "admin@example.com",
+        emailVerified: new Date(),
+        image: "/placeholder-user.jpg",
         role: "ADMIN",
       },
     })
-    adminUserId = adminUser.id
-    console.log("Created placeholder admin user")
+    console.log("Created admin user: admin@example.com")
+  } else {
+    console.log("Admin user already exists.")
   }
 
-  // Create a dummy user
-  const user = await prisma.user.upsert({
-    where: { email: "test@example.com" },
-    update: {},
-    create: {
-      name: "Test User",
-      email: "test@example.com",
-      emailVerified: new Date(),
-      image: "https://avatars.githubusercontent.com/u/0?v=4",
-    },
-  })
+  // Seed some dummy speed test data
+  const users = await prisma.user.findMany()
+  if (users.length > 0) {
+    const user1 = users[0]
+    const user2 = users.length > 1 ? users[1] : users[0] // Use second user if available, else first
 
-  console.log(`Created dummy user with ID: ${user.id}`)
+    const speedTests = [
+      {
+        userId: user1.id,
+        downloadSpeed: 150.5,
+        uploadSpeed: 30.2,
+        ping: 15,
+        serverInfo: JSON.stringify({ id: 1, name: "Server A", location: "New York", country: "US" }),
+        location: "New York",
+        ipAddress: "hashed_ip_1",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      },
+      {
+        userId: user2.id,
+        downloadSpeed: 90.1,
+        uploadSpeed: 25.8,
+        ping: 22,
+        serverInfo: JSON.stringify({ id: 2, name: "Server B", location: "Los Angeles", country: "US" }),
+        location: "Los Angeles",
+        ipAddress: "hashed_ip_2",
+        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+      {
+        userId: user1.id,
+        downloadSpeed: 200.0,
+        uploadSpeed: 40.0,
+        ping: 10,
+        serverInfo: JSON.stringify({ id: 1, name: "Server A", location: "New York", country: "US" }),
+        location: "New York",
+        ipAddress: "hashed_ip_1",
+        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        userId: null, // Public test
+        downloadSpeed: 75.3,
+        uploadSpeed: 18.7,
+        ping: 30,
+        serverInfo: JSON.stringify({ id: 3, name: "Server C", location: "Dallas", country: "US" }),
+        location: "Dallas",
+        ipAddress: "hashed_ip_3",
+        userAgent: "Mozilla/5.0 (Linux; Android 10)",
+        createdAt: new Date(), // Now
+      },
+    ]
 
-  // Create dummy speed test records
-  const speedTests = []
-  for (let i = 0; i < 10; i++) {
-    speedTests.push(
-      prisma.speedTest.create({
-        data: {
-          userId: user.id,
-          downloadSpeed: Number.parseFloat((Math.random() * 100 + 50).toFixed(2)), // 50-150 Mbps
-          uploadSpeed: Number.parseFloat((Math.random() * 50 + 20).toFixed(2)), // 20-70 Mbps
-          ping: Math.floor(Math.random() * 50 + 10), // 10-60 ms
-          serverInfo: JSON.stringify({
-            id: 12345 + i,
-            name: `Server ${i + 1}`,
-            location: `City ${i + 1}`,
-            country: "US",
-          }),
-          location: `City ${i + 1}`,
-          ipAddress: `hashed_ip_${i}`,
-          userAgent:
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36",
-          createdAt: new Date(Date.now() - i * 24 * 60 * 60 * 1000), // Spread over days
-        },
-      }),
-    )
+    for (const test of speedTests) {
+      await prisma.speedTest.upsert({
+        where: { id: test.id || "nonexistent" }, // Use a dummy ID for upsert to always create new
+        update: {},
+        create: test,
+      })
+    }
+    console.log(`Seeded ${speedTests.length} speed test records.`)
+  } else {
+    console.log("No users found to associate speed tests with. Skipping speed test seeding.")
   }
-  await Promise.all(speedTests)
-  console.log(`Created ${speedTests.length} dummy speed test records.`)
 
   // Sample articles data
   const sampleArticles = [
@@ -150,7 +160,7 @@ async function main() {
       author: "KTSC Team",
       readTime: "5 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "How to Optimize Your Home Network",
@@ -199,7 +209,7 @@ async function main() {
       author: "Network Expert",
       readTime: "8 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "WiFi vs Ethernet: Which is Better?",
@@ -277,7 +287,7 @@ async function main() {
       author: "Tech Analyst",
       readTime: "6 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "Troubleshooting Slow Internet Connections",
@@ -369,7 +379,7 @@ async function main() {
       author: "Support Team",
       readTime: "10 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "Understanding Bandwidth vs Speed",
@@ -489,7 +499,7 @@ async function main() {
       author: "KTSC Team",
       readTime: "4 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "Best Practices for Remote Work Connectivity",
@@ -662,7 +672,7 @@ async function main() {
       author: "Productivity Expert",
       readTime: "7 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
     {
       title: "5G vs Fiber: The Future of Internet Connectivity",
@@ -872,7 +882,7 @@ async function main() {
       author: "Future Tech Analyst",
       readTime: "9 min read",
       published: true,
-      authorId: adminUserId,
+      authorId: existingAdmin ? existingAdmin.id : "admin@example.com",
     },
   ]
 
@@ -890,24 +900,73 @@ async function main() {
 
   console.log(`Created ${sampleArticles.length} sample articles`)
 
-  // Create dummy articles
-  const articles = []
-  for (let i = 0; i < 5; i++) {
-    articles.push(
-      prisma.article.create({
-        data: {
-          title: `Sample Article ${i + 1}`,
-          content: `This is the content for sample article ${i + 1}. It's a placeholder for demonstration purposes.`,
-          authorId: user.id,
-          published: true,
-          createdAt: new Date(Date.now() - i * 2 * 24 * 60 * 60 * 1000), // Spread over days
-          updatedAt: new Date(Date.now() - i * 2 * 24 * 60 * 60 * 1000),
-        },
-      }),
-    )
+  // Seed some dummy articles
+  const articles = [
+    {
+      title: "Understanding Internet Speed: Mbps vs. MBps",
+      content:
+        "<p>Many people confuse Mbps with MBps. This article explains the difference and why it matters for your internet speed.</p>",
+      published: true,
+      createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: "How to Improve Your Wi-Fi Signal at Home",
+      content:
+        "<p>A strong Wi-Fi signal is crucial for good internet speed. Learn tips and tricks to optimize your home network.</p>",
+      published: true,
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    },
+    {
+      title: "The Future of 5G and Its Impact on Internet Connectivity",
+      content:
+        "<p>5G technology is rapidly expanding. Discover how it will change the landscape of internet access and speed.</p>",
+      published: false, // This one is a draft
+      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+  ]
+
+  for (const articleData of articles) {
+    await prisma.article.upsert({
+      where: { title: articleData.title },
+      update: {},
+      create: articleData,
+    })
   }
-  await Promise.all(articles)
-  console.log(`Created ${articles.length} dummy articles.`)
+  console.log(`Seeded ${articles.length} articles.`)
+
+  // Update system stats for today
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const totalTests = await prisma.speedTest.count()
+  const totalUsers = await prisma.user.count()
+  const avgSpeeds = await prisma.speedTest.aggregate({
+    _avg: {
+      downloadSpeed: true,
+      uploadSpeed: true,
+      ping: true,
+    },
+  })
+
+  await prisma.systemStats.upsert({
+    where: { date: today },
+    update: {
+      totalTests: totalTests,
+      totalUsers: totalUsers,
+      averageDownload: avgSpeeds._avg.downloadSpeed,
+      averageUpload: avgSpeeds._avg.uploadSpeed,
+      averagePing: avgSpeeds._avg.ping,
+    },
+    create: {
+      date: today,
+      totalTests: totalTests,
+      totalUsers: totalUsers,
+      averageDownload: avgSpeeds._avg.downloadSpeed,
+      averageUpload: avgSpeeds._avg.uploadSpeed,
+      averagePing: avgSpeeds._avg.ping,
+    },
+  })
+  console.log("Updated system statistics.")
 
   console.log("Database seeded successfully!")
 }

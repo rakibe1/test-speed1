@@ -1,56 +1,64 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useSession } from "next-auth/react"
-import { format } from "date-fns"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { format } from "date-fns"
+import { useSession } from "next-auth/react"
 import { Skeleton } from "@/components/ui/skeleton"
-import type { TestResults } from "@/hooks/use-speed-test"
 
-interface SpeedHistoryProps {
-  initialHistory: TestResults[]
+export type TestResults = {
+  id: string
+  timestamp: string // ISO string from DB
+  downloadSpeed: number
+  uploadSpeed: number
+  ping: number
+  serverInfo?: {
+    id: number
+    name: string
+    location: string
+    country: string
+  } | null
 }
 
-export function SpeedHistory({ initialHistory }: SpeedHistoryProps) {
+export function SpeedHistory() {
   const { data: session } = useSession()
-  const [history, setHistory] = useState<TestResults[]>(initialHistory)
-  const [loading, setLoading] = useState(false)
+  const [history, setHistory] = useState<TestResults[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchHistory = useCallback(async () => {
-    if (session?.user) {
-      setLoading(true)
-      try {
-        const response = await fetch("/api/speed-test/history")
-        if (!response.ok) {
-          throw new Error("Failed to fetch history")
+    setLoading(true)
+    setError(null)
+    try {
+      if (session?.user) {
+        // Fetch from API for authenticated users
+        const res = await fetch("/api/speed-test/history")
+        if (!res.ok) {
+          throw new Error(`Failed to fetch history: ${res.statusText}`)
         }
-        const data: TestResults[] = await response.json()
+        const data = await res.json()
         setHistory(data)
-      } catch (error) {
-        console.error("Error fetching history:", error)
-        // Optionally show a toast error
-      } finally {
-        setLoading(false)
-      }
-    } else {
-      // Load from local storage if not authenticated
-      try {
+      } else {
+        // Load from localStorage for unauthenticated users
         const existing = localStorage.getItem("ktsc-speed-history")
         setHistory(existing ? JSON.parse(existing) : [])
-      } catch (error) {
-        console.error("Failed to load history from localStorage:", error)
-        setHistory([])
       }
+    } catch (err: any) {
+      console.error("Error fetching/loading history:", err)
+      setError(err.message || "Failed to load speed test history.")
+    } finally {
+      setLoading(false)
     }
   }, [session])
 
   useEffect(() => {
     fetchHistory()
 
-    // Listen for custom event to update history from local storage
+    // Listen for custom event to update history from localStorage
     const handleHistoryUpdate = () => {
-      if (!session) {
+      if (!session?.user) {
+        // Only update from localStorage if not authenticated
         fetchHistory()
       }
     }
@@ -61,63 +69,70 @@ export function SpeedHistory({ initialHistory }: SpeedHistoryProps) {
     }
   }, [fetchHistory, session])
 
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-1/3 mb-2" />
+          <Skeleton className="h-4 w-2/3" />
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-48 w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error) {
+    return <div className="text-center text-red-500">Error: {error}</div>
+  }
+
+  if (history.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>No History</CardTitle>
+          <CardDescription>Run a speed test to see your results here!</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {!session?.user && (
+            <p className="text-sm text-gray-500">Sign in to save your history permanently across devices.</p>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Test History</CardTitle>
+        <CardTitle>Recent Speed Tests</CardTitle>
+        <CardDescription>Your last {history.length} speed test results.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
-                <TableHead>Download (Mbps)</TableHead>
-                <TableHead>Upload (Mbps)</TableHead>
-                <TableHead>Ping (ms)</TableHead>
+                <TableHead>Download</TableHead>
+                <TableHead>Upload</TableHead>
+                <TableHead>Ping</TableHead>
                 <TableHead>Server</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-24" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-20" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-16" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-32" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : history.length > 0 ? (
-                history.map((test) => (
-                  <TableRow key={test.id}>
-                    <TableCell>{format(new Date(test.timestamp), "MMM dd, yyyy HH:mm")}</TableCell>
-                    <TableCell>{test.downloadSpeed.toFixed(2)}</TableCell>
-                    <TableCell>{test.uploadSpeed.toFixed(2)}</TableCell>
-                    <TableCell>{test.ping}</TableCell>
-                    <TableCell>
-                      {test.serverInfo ? `${test.serverInfo.name}, ${test.serverInfo.location}` : "N/A"}
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No speed test history found.
+              {history.map((test) => (
+                <TableRow key={test.id}>
+                  <TableCell>{format(new Date(test.timestamp), "MMM dd, yyyy HH:mm")}</TableCell>
+                  <TableCell>{test.downloadSpeed.toFixed(2)} Mbps</TableCell>
+                  <TableCell>{test.uploadSpeed.toFixed(2)} Mbps</TableCell>
+                  <TableCell>{test.ping} ms</TableCell>
+                  <TableCell>
+                    {test.serverInfo ? `${test.serverInfo.name}, ${test.serverInfo.location}` : "N/A"}
                   </TableCell>
                 </TableRow>
-              )}
+              ))}
             </TableBody>
           </Table>
         </div>

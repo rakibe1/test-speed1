@@ -1,56 +1,67 @@
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "About",
-  description: "Learn more about our speed testing application.",
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-4xl font-bold">About KTSC Speed Test</h1>
-      <div className="prose dark:prose-invert">
-        <p>
-          Welcome to KTSC Speed Test, your reliable tool for measuring internet connection performance. In today's
-          fast-paced digital world, a stable and fast internet connection is crucial for work, entertainment, and
-          communication. Our application provides you with accurate insights into your download speed, upload speed, and
-          ping latency.
-        </p>
-        <h2 className="mt-8 text-2xl font-semibold">Our Mission</h2>
-        <p>
-          Our mission is to empower users with the knowledge they need to understand their internet service. By
-          providing a simple, intuitive, and accurate speed test, we aim to help you diagnose connectivity issues,
-          verify your ISP's promises, and ensure you're getting the performance you pay for.
-        </p>
-        <h2 className="mt-8 text-2xl font-semibold">How It Works</h2>
-        <p>
-          Our speed test utilizes the `fast-speedtest-api` library to perform comprehensive tests. When you click "Start
-          Test", our system connects to optimal servers to measure:
-        </p>
-        <ul>
-          <li>
-            <strong>Download Speed:</strong> How quickly your device can retrieve data from the internet. This is
-            important for streaming, browsing, and downloading files.
-          </li>
-          <li>
-            <strong>Upload Speed:</strong> How quickly your device can send data to the internet. Crucial for video
-            calls, online gaming, and uploading content.
-          </li>
-          <li>
-            <strong>Ping (Latency):</strong> The reaction time of your connection – how fast you get a response after
-            you've sent out a request. Lower ping is better for real-time applications like gaming.
-          </li>
-        </ul>
-        <h2 className="mt-8 text-2xl font-semibold">Privacy and Data</h2>
-        <p>
-          We value your privacy. While we record test results to provide aggregated system statistics, your IP address
-          is hashed for anonymity. If you choose to sign in, your test history will be saved to your account, allowing
-          you to track your performance over time.
-        </p>
-        <p className="mt-4">
-          Thank you for choosing KTSC Speed Test. We hope our tool helps you get the most out of your internet!
-        </p>
-      </div>
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <Card className="max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">About KTSC Speed Testing App</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 text-lg text-gray-700 dark:text-gray-300">
+          <p>
+            Welcome to the KTSC Speed Testing App! Our mission is to provide you with a fast, accurate, and reliable
+            tool to measure your internet connection speed. In today's digital world, a stable and speedy internet
+            connection is crucial for work, entertainment, and communication. We understand this need and have built
+            this application to help you monitor your internet performance with ease.
+          </p>
+          <Separator />
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Our Technology</h2>
+          <p>
+            This application is built using the latest web technologies to ensure a smooth and responsive user
+            experience. We leverage:
+          </p>
+          <ul className="list-disc list-inside space-y-2 pl-4">
+            <li>
+              <strong>Next.js:</strong> A powerful React framework for building performant and scalable web
+              applications.
+            </li>
+            <li>
+              <strong>Shadcn UI:</strong> A collection of beautifully designed and accessible UI components built with
+              Radix UI and Tailwind CSS.
+            </li>
+            <li>
+              <strong>`fast-speedtest-api`:</strong> A robust library for conducting accurate internet speed tests.
+            </li>
+            <li>
+              <strong>Prisma:</strong> A modern database toolkit that simplifies database access and management.
+            </li>
+            <li>
+              <strong>NextAuth.js:</strong> For secure and flexible authentication, allowing users to save their test
+              history.
+            </li>
+          </ul>
+          <Separator />
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">How It Works</h2>
+          <p>
+            When you click the "Start Test" button, our application connects to a nearby speed test server. It then
+            measures your download speed (how fast you can pull data from the internet), upload speed (how fast you can
+            send data to the internet), and ping (the reaction time of your connection). The results are displayed in
+            real-time and, if you're signed in, saved to your personal history for future reference.
+          </p>
+          <Separator />
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Our Commitment</h2>
+          <p>
+            We are committed to providing a transparent and user-friendly experience. Your privacy is important to us;
+            we only collect necessary data to perform the speed test and improve our service. We continuously work to
+            enhance the accuracy and features of this app.
+          </p>
+          <p>
+            Thank you for choosing KTSC Speed Testing App. We hope it helps you stay on top of your internet
+            performance!
+          </p>
+        </CardContent>
+      </Card>
     </div>
   )
 }

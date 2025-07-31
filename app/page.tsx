@@ -36,21 +36,16 @@ async function getSystemStats() {
 
 export default function HomePage() {
   return (
-    <div className="container mx-auto py-8">
-      <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
-        <div className="flex max-w-[980px] flex-col items-start gap-2">
-          <h1 className="text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl">
-            Test Your Internet Speed
-          </h1>
-          <p className="max-w-[700px] text-lg text-muted-foreground">
-            Get accurate measurements of your download, upload, and ping.
-          </p>
-        </div>
-        <div className="flex flex-col items-center justify-center w-full py-8">
-          <SpeedTestInterface />
-        </div>
-      </section>
-
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-4xl font-bold text-center">KTSC Internet Speed Test</CardTitle>
+          <CardContent className="text-center text-lg text-gray-700 dark:text-gray-300">
+            Measure your internet connection speed with precision.
+          </CardContent>
+        </CardHeader>
+      </Card>
+      <SpeedTestInterface />
       <Separator className="my-12" />
 
       <section className="mb-12">

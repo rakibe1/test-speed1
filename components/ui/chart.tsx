@@ -1,5 +1,7 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import * as React from "react"
 import {
   CartesianGrid,
@@ -13,165 +15,169 @@ import {
   RadialBarChart,
   Area,
   AreaChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Cell,
 } from "recharts"
 
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
-import { cn } from "@/lib/utils"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Define a type for the chart components to simplify usage
-type ChartComponent = typeof LineChart | typeof BarChart | typeof PieChart | typeof RadialBarChart | typeof AreaChart
-
-// Define a map for chart types to their components
-const chartComponents: { [key: string]: ChartComponent } = {
-  line: LineChart,
-  bar: BarChart,
-  pie: PieChart,
-  radial: RadialBarChart,
-  area: AreaChart,
-}
-
-interface ChartProps extends React.HTMLAttributes<HTMLDivElement> {
+// Define types for common chart props
+type ChartProps = {
   data: Record<string, any>[]
-  config: ChartConfig
-  chartType: "line" | "bar" | "pie" | "radial" | "area"
-  aspectRatio?: number
-  showGrid?: boolean
-  showXAxis?: boolean
-  showYAxis?: boolean
-  showTooltip?: boolean
-  showLegend?: boolean
+  categories: string[]
+  index: string
+  type?: "line" | "bar" | "pie" | "radial" | "area"
+  valueFormatter?: (value: number) => string
+  className?: string
 }
 
-const Chart = React.forwardRef<HTMLDivElement, ChartProps>(
-  (
-    {
-      data,
-      config,
-      chartType,
-      aspectRatio = 16 / 9,
-      showGrid = true,
-      showXAxis = true,
-      showYAxis = true,
-      showTooltip = true,
-      showLegend = true,
-      className,
-      ...props
-    },
-    ref,
-  ) => {
-    const ChartComponent = chartComponents[chartType]
+// Chart component
+const Chart = ({ data, categories, index, type = "line", valueFormatter, className }: ChartProps) => {
+  const ChartComponent =
+    type === "line"
+      ? LineChart
+      : type === "bar"
+        ? BarChart
+        : type === "pie"
+          ? PieChart
+          : type === "radial"
+            ? RadialBarChart
+            : AreaChart
 
-    if (!ChartComponent) {
-      console.warn(`Chart type "${chartType}" is not supported.`)
-      return null
+  const renderChart = () => {
+    switch (type) {
+      case "line":
+        return (
+          <LineChart data={data}>
+            <CartesianGrid vertical={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            {categories.map((category) => (
+              <Line key={category} dataKey={category} stroke="hsl(var(--primary))" dot={false} />
+            ))}
+          </LineChart>
+        )
+      case "bar":
+        return (
+          <BarChart data={data}>
+            <CartesianGrid vertical={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            {categories.map((category) => (
+              <Bar key={category} dataKey={category} fill="hsl(var(--primary))" />
+            ))}
+          </BarChart>
+        )
+      case "area":
+        return (
+          <AreaChart data={data}>
+            <CartesianGrid vertical={false} />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            {categories.map((category) => (
+              <Area key={category} dataKey={category} fill="hsl(var(--primary))" stroke="hsl(var(--primary))" />
+            ))}
+          </AreaChart>
+        )
+      case "pie":
+        return (
+          <PieChart>
+            {categories.map((category) => (
+              <Pie
+                key={category}
+                dataKey={category}
+                nameKey={index}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                fill="hsl(var(--primary))"
+                label
+              />
+            ))}
+            <ChartTooltip content={<ChartTooltipContent />} />
+          </PieChart>
+        )
+      case "radial":
+        return (
+          <RadialBarChart innerRadius={20} outerRadius={100} data={data}>
+            {categories.map((category) => (
+              <RadialBar key={category} dataKey={category} fill="hsl(var(--primary))" />
+            ))}
+            <ChartTooltip content={<ChartTooltipContent />} />
+          </RadialBarChart>
+        )
+      default:
+        return null
     }
+  }
 
-    const renderChartElements = () => {
-      switch (chartType) {
-        case "line":
-          return Object.entries(config).map(([key, item]) => {
-            if (item.type === "value") {
-              return <Line key={key} dataKey={key} stroke={item.color} type="monotone" dot={false} name={item.label} />
-            }
-            return null
-          })
-        case "bar":
-          return Object.entries(config).map(([key, item]) => {
-            if (item.type === "value") {
-              return <Bar key={key} dataKey={key} fill={item.color} name={item.label} />
-            }
-            return null
-          })
-        case "area":
-          return Object.entries(config).map(([key, item]) => {
-            if (item.type === "value") {
-              return (
-                <Area key={key} dataKey={key} fill={item.color} stroke={item.color} type="monotone" name={item.label} />
-              )
-            }
-            return null
-          })
-        case "pie":
-          // PieChart typically uses a single Pie component
-          const valueKey = Object.keys(config).find((k) => config[k].type === "value")
-          const nameKey = Object.keys(config).find((k) => config[k].type === "category")
+  return (
+    <ChartContainer
+      config={{
+        [categories[0]]: {
+          label: categories[0],
+          color: "hsl(var(--primary))",
+        },
+      }}
+      className={cn("min-h-[200px] w-full", className)}
+    >
+      {renderChart()}
+    </ChartContainer>
+  )
+}
 
-          if (!valueKey || !nameKey) {
-            console.warn("Pie chart config requires a 'value' and 'category' type key.")
-            return null
-          }
+// Example usage with a selector for different chart types
+const chartData = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+]
 
-          return (
-            <Pie
-              dataKey={valueKey}
-              nameKey={nameKey}
-              outerRadius={80}
-              fill="#8884d8" // Default fill, can be overridden by data
-              label
-            >
-              {/* Colors for segments can be passed via data or a custom function */}
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={config[nameKey]?.color || "#8884d8"} />
-              ))}
-            </Pie>
-          )
-        case "radial":
-          // RadialBarChart typically uses a single RadialBar component
-          const radialValueKey = Object.keys(config).find((k) => config[k].type === "value")
-          const radialNameKey = Object.keys(config).find((k) => config[k].type === "category")
+export function ChartWithSelector() {
+  const [chartType, setChartType] = React.useState<ChartProps["type"]>("line")
 
-          if (!radialValueKey || !radialNameKey) {
-            console.warn("Radial bar chart config requires a 'value' and 'category' type key.")
-            return null
-          }
-
-          return (
-            <RadialBar
-              minAngle={15}
-              label={{ position: "insideStart", fill: "#fff" }}
-              background
-              clockWise
-              dataKey={radialValueKey}
-            >
-              {/* Colors for segments can be passed via data or a custom function */}
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={config[radialNameKey]?.color || "#8884d8"} />
-              ))}
-            </RadialBar>
-          )
-        default:
-          return null
-      }
-    }
-
-    return (
-      <ChartContainer ref={ref} config={config} className={cn("min-h-[200px] w-full", className)} {...props}>
-        <ResponsiveContainer aspect={aspectRatio}>
-          <ChartComponent data={data}>
-            {showGrid && <CartesianGrid strokeDasharray="3 3" />}
-            {showXAxis && <XAxis dataKey={Object.keys(config).find((k) => config[k].type === "category")} />}
-            {showYAxis && <YAxis />}
-            {showTooltip && <ChartTooltip content={<ChartTooltipContent />} />}
-            {showLegend && <ChartLegend content={<ChartLegendContent />} />}
-            {renderChartElements()}
-          </ChartComponent>
-        </ResponsiveContainer>
-      </ChartContainer>
-    )
-  },
-)
-
-Chart.displayName = "Chart"
-
-export { Chart }
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Usage Statistics</CardTitle>
+        <CardDescription>Monthly active users for desktop and mobile.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-end mb-4">
+          <Select value={chartType} onValueChange={(value: ChartProps["type"]) => setChartType(value)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select Chart Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="line">Line Chart</SelectItem>
+              <SelectItem value="bar">Bar Chart</SelectItem>
+              <SelectItem value="area">Area Chart</SelectItem>
+              <SelectItem value="pie">Pie Chart</SelectItem>
+              <SelectItem value="radial">Radial Bar Chart</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Chart data={chartData} categories={["desktop", "mobile"]} index="month" type={chartType} />
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Month</TableHead>
+              <TableHead>Desktop</TableHead>
+              <TableHead>Mobile</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {chartData.map((row, i) => (
+              <TableRow key={i}>
+                <TableCell>{row.month}</TableCell>
+                <TableCell>{row.desktop}</TableCell>
+                <TableCell>{row.mobile}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+}

@@ -1,40 +1,73 @@
-import type { Metadata } from "next"
-
-export const metadata: Metadata = {
-  title: "Contact",
-  description: "Get in touch with us.",
-}
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Mail, Phone, MapPin } from "lucide-react"
 
 export default function ContactPage() {
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-4xl font-bold">Contact Us</h1>
-      <div className="prose dark:prose-invert">
-        <p>
-          Have questions, feedback, or need support? We'd love to hear from you! Please reach out to us using the
-          information below.
-        </p>
-        <h2 className="mt-8 text-2xl font-semibold">General Inquiries</h2>
-        <p>
-          For general questions about our speed testing application or partnership opportunities, please email us at:
-        </p>
-        <p className="font-medium">
-          <a href="mailto:info@ktscspeedtest.com">info@ktscspeedtest.com</a>
-        </p>
-        <h2 className="mt-8 text-2xl font-semibold">Support</h2>
-        <p>
-          If you are experiencing issues with the speed test, have technical questions, or need assistance, our support
-          team is here to help.
-        </p>
-        <p className="font-medium">
-          <a href="mailto:support@ktscspeedtest.com">support@ktscspeedtest.com</a>
-        </p>
-        <h2 className="mt-8 text-2xl font-semibold">Business Hours</h2>
-        <p>Our team is available to respond to inquiries during the following hours:</p>
-        <p>Monday - Friday: 9:00 AM - 5:00 PM (EST)</p>
-        <p>Weekends and Public Holidays: Closed</p>
-        <p className="mt-4">We aim to respond to all inquiries within 24-48 business hours.</p>
-      </div>
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <Card className="max-w-3xl mx-auto">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold text-center">Contact Us</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Contact Information */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Get in Touch</h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                Have questions, feedback, or need support? Reach out to us through any of the methods below.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Mail className="h-5 w-5 text-primary" />
+                  <a href="mailto:support@ktsc.com" className="text-gray-700 dark:text-gray-300 hover:underline">
+                    support@ktsc.com
+                  </a>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Phone className="h-5 w-5 text-primary" />
+                  <a href="tel:+1234567890" className="text-gray-700 dark:text-gray-300 hover:underline">
+                    +1 (234) 567-890
+                  </a>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <span className="text-gray-700 dark:text-gray-300">123 Speed Test Lane, Internet City, IC 98765</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Form */}
+            <div className="space-y-4">
+              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200">Send us a Message</h2>
+              <form className="space-y-4">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" placeholder="Your Name" />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="your@example.com" />
+                </div>
+                <div>
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input id="subject" placeholder="Subject of your message" />
+                </div>
+                <div>
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea id="message" placeholder="Your message" rows={5} />
+                </div>
+                <Button type="submit" className="w-full">
+                  Send Message
+                </Button>
+              </form>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

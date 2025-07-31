@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { FormDescription } from "@/components/ui/form"
+
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { toast } from "sonner"
-
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
 import { RichTextEditor } from "./rich-text-editor"
 
 const formSchema = z.object({
@@ -19,43 +19,42 @@ const formSchema = z.object({
   published: z.boolean().default(false),
 })
 
-type ArticleFormValues = z.infer<typeof formSchema>
-
 interface ArticleFormProps {
-  initialData?: {
-    id?: string
+  article?: {
+    id: string
     title: string
     content: string
     published: boolean
   }
+  onSuccess?: () => void
 }
 
-export function ArticleForm({ initialData }: ArticleFormProps) {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const form = useForm<ArticleFormValues>({
+export function ArticleForm({ article, onSuccess }: ArticleFormProps) {
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: initialData || {
-      title: "",
-      content: "",
-      published: false,
+    defaultValues: {
+      title: article?.title || "",
+      content: article?.content || "",
+      published: article?.published || false,
     },
   })
 
   useEffect(() => {
-    if (initialData) {
-      form.reset(initialData)
+    if (article) {
+      form.reset({
+        title: article.title,
+        content: article.content,
+        published: article.published,
+      })
     }
-  }, [initialData, form])
+  }, [article, form])
 
-  const onSubmit = async (values: ArticleFormValues) => {
-    setIsSubmitting(true)
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    const method = article ? "PUT" : "POST"
+    const url = article ? `/api/articles/${article.id}` : "/api/articles"
+
     try {
-      const method = initialData?.id ? "PUT" : "POST"
-      const url = initialData?.id ? `/api/articles/${initialData.id}` : "/api/articles"
-
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -63,17 +62,16 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
         body: JSON.stringify(values),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to save article")
+      if (!res.ok) {
+        throw new Error(`Failed to ${article ? "update" : "create"} article`)
       }
 
-      toast.success(initialData?.id ? "Article updated successfully!" : "Article created successfully!")
-      router.push("/admin")
-      router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || "An error occurred while saving the article.")
-    } finally {
-      setIsSubmitting(false)
+      toast.success(`Article ${article ? "updated" : "created"} successfully!`)
+      form.reset()
+      onSuccess?.()
+    } catch (error) {
+      console.error("Error submitting article:", error)
+      toast.error(`Failed to ${article ? "update" : "create"} article.`)
     }
   }
 
@@ -87,13 +85,12 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder="Article title" {...field} />
+                <Input placeholder="Article Title" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="content"
@@ -101,13 +98,12 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <RichTextEditor content={field.value} onContentChange={field.onChange} />
+                <RichTextEditor value={field.value} onChange={field.onChange} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
         <FormField
           control={form.control}
           name="published"
@@ -115,17 +111,16 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
                 <FormLabel className="text-base">Publish Article</FormLabel>
-                <p className="text-sm text-muted-foreground">Toggle to make the article visible to the public.</p>
+                <FormDescription>Toggle to make the article visible to the public.</FormDescription>
               </div>
               <FormControl>
-                <Switch checked={field.value} onCheckedChange={field.onChange} aria-readonly />
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>
             </FormItem>
           )}
         />
-
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Article"}
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? "Saving..." : article ? "Update Article" : "Create Article"}
         </Button>
       </form>
     </Form>

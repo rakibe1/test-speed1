@@ -8,16 +8,17 @@ import { prisma } from "@/lib/prisma"
 const userProfilePatchSchema = z.object({
   name: z.string().min(1).optional(),
   image: z.string().url().optional().nullable(),
+  email: z.string().email().optional(),
 })
 
-export async function GET(req: Request) {
+export async function GET() {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
-
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -25,31 +26,32 @@ export async function GET(req: Request) {
         name: true,
         email: true,
         image: true,
-        role: true,
+        emailVerified: true,
         createdAt: true,
+        updatedAt: true,
       },
     })
 
     if (!user) {
-      return new NextResponse("User not found", { status: 404 })
+      return NextResponse.json({ message: "User not found" }, { status: 404 })
     }
 
     return NextResponse.json(user)
   } catch (error) {
-    console.error(error)
-    return new NextResponse("Internal Server Error", { status: 500 })
+    console.error("Error fetching user profile:", error)
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(request: Request) {
+  const session = await getServerSession(authOptions)
+
+  if (!session || !session.user?.id) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+  }
+
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 })
-    }
-
-    const json = await req.json()
+    const json = await request.json()
     const body = userProfilePatchSchema.parse(json)
 
     const updatedUser = await prisma.user.update({
@@ -57,22 +59,25 @@ export async function PATCH(req: Request) {
       data: {
         name: body.name,
         image: body.image,
+        email: body.email,
       },
       select: {
         id: true,
         name: true,
         email: true,
         image: true,
-        role: true,
+        emailVerified: true,
+        createdAt: true,
+        updatedAt: true,
       },
     })
 
     return NextResponse.json(updatedUser)
   } catch (error) {
-    console.error(error)
+    console.error("Error updating user profile:", error)
     if (error instanceof z.ZodError) {
       return new NextResponse(JSON.stringify(error.issues), { status: 422 })
     }
-    return new NextResponse("Internal Server Error", { status: 500 })
+    return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }

@@ -1,6 +1,7 @@
 # Next.js
 .next/
 out/
+/build
 
 # Node.js
 node_modules/
@@ -32,3 +33,9 @@ logs/
 # Misc
 .DS_Store
 Thumbs.db
+*.pem
+/coverage
+/.pnp
+.pnp.js
+.vercel
+.turbo

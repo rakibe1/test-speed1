@@ -1,133 +1,106 @@
-import type { Metadata } from "next"
-import { getServerSession } from "next-auth"
-import { redirect } from "next/navigation"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { SpeedHistory } from "@/components/speed-history"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
+import { redirect } from "next/navigation"
+import { prisma } from "@/lib/prisma"
+import { format } from "date-fns"
 
-export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Your personal speed test dashboard.",
+export const metadata = {
+  title: "Dashboard - KTSC Speed Testing App",
+  description: "Your personal dashboard for internet speed tests.",
+}
+
+async function getSystemStats() {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0) // Normalize to start of day
+
+  const stats = await prisma.systemStats.findUnique({
+    where: { date: today },
+  })
+  return stats
 }
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
 
-  if (!session?.user) {
+  if (!session) {
     redirect("/auth/signin")
   }
 
-  const userId = session.user.id
-
-  const speedTests = await prisma.speedTest.findMany({
-    where: {
-      userId: userId,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 50, // Limit to last 50 tests
-  })
-
-  const formattedSpeedTests = speedTests.map((test) => ({
-    id: test.id,
-    timestamp: test.createdAt,
-    downloadSpeed: test.downloadSpeed,
-    uploadSpeed: test.uploadSpeed,
-    ping: test.ping,
-    serverInfo: test.serverInfo ? JSON.parse(test.serverInfo as string) : null,
-  }))
-
-  // Calculate average speeds and ping for the user
-  const userStats = await prisma.speedTest.aggregate({
-    where: { userId: userId },
-    _avg: {
-      downloadSpeed: true,
-      uploadSpeed: true,
-      ping: true,
-    },
-    _count: true,
-  })
+  const systemStats = await getSystemStats()
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="mb-6 text-4xl font-bold">Welcome, {session.user.name || "User"}!</h1>
+    <div className="container mx-auto px-4 py-8 md:py-12">
+      <h1 className="text-4xl font-bold text-center mb-8">Welcome, {session.user?.name || "User"}!</h1>
 
-      <div className="grid gap-6 md:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tests</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <CardHeader>
+            <CardTitle className="text-xl">Total Tests (Today)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats._count}</div>
-            <p className="text-xs text-muted-foreground">Your total speed tests</p>
+            <p className="text-3xl font-bold">{systemStats?.totalTests || 0}</p>
+            <p className="text-sm text-gray-500">As of {format(new Date(), "PPP")}</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Download</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <CardHeader>
+            <CardTitle className="text-xl">Total Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {userStats._avg.downloadSpeed ? userStats._avg.downloadSpeed.toFixed(2) : "N/A"} Mbps
-            </div>
-            <p className="text-xs text-muted-foreground">Your average download speed</p>
+            <p className="text-3xl font-bold">{systemStats?.totalUsers || 0}</p>
+            <p className="text-sm text-gray-500">Registered users</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Upload</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-            </svg>
+          <CardHeader>
+            <CardTitle className="text-xl">Avg. Download (Today)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {userStats._avg.uploadSpeed ? userStats._avg.uploadSpeed.toFixed(2) : "N/A"} Mbps
-            </div>
-            <p className="text-xs text-muted-foreground">Your average upload speed</p>
+            <p className="text-3xl font-bold">
+              {systemStats?.averageDownload ? systemStats.averageDownload.toFixed(2) : "0.00"} Mbps
+            </p>
+            <p className="text-sm text-gray-500">Global average</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Avg. Upload (Today)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">
+              {systemStats?.averageUpload ? systemStats.averageUpload.toFixed(2) : "0.00"} Mbps
+            </p>
+            <p className="text-sm text-gray-500">Global average</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Avg. Ping (Today)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">
+              {systemStats?.averagePing ? systemStats.averagePing.toFixed(0) : "0"} ms
+            </p>
+            <p className="text-sm text-gray-500">Global average</p>
           </CardContent>
         </Card>
       </div>
 
-      <h2 className="mb-4 text-2xl font-bold">Your Recent Tests</h2>
-      <SpeedHistory initialHistory={formattedSpeedTests} />
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl">Your Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700 dark:text-gray-300">
+            This section will display your most recent speed test results or other relevant user activity.
+          </p>
+          {/* Placeholder for recent activity list/chart */}
+          <div className="mt-4 h-48 flex items-center justify-center border border-dashed rounded-md text-gray-400">
+            No recent activity to display. Run a speed test!
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -4,6 +4,8 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { type VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -12,6 +14,8 @@ import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { buttonVariants } from "@/components/ui/button"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -481,6 +485,39 @@ const SidebarTitle = React.forwardRef<HTMLDivElement, React.ComponentProps<"div"
   />
 ))
 SidebarTitle.displayName = "SidebarTitle"
+
+interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
+  items: {
+    href: string
+    title: string
+    icon?: React.ElementType
+  }[]
+}
+
+export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
+  const pathname = usePathname()
+
+  return (
+    <ScrollArea className="h-[calc(100vh-8rem)] py-4">
+      <nav className={cn("flex space-x-2 lg:flex-col lg:space-x-0 lg:space-y-1", className)} {...props}>
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              buttonVariants({ variant: "ghost" }),
+              pathname === item.href ? "bg-muted hover:bg-muted" : "hover:bg-transparent hover:underline",
+              "justify-start",
+            )}
+          >
+            {item.icon && <item.icon className="mr-2 h-4 w-4" />}
+            {item.title}
+          </Link>
+        ))}
+      </nav>
+    </ScrollArea>
+  )
+}
 
 export {
   SidebarProvider,
