@@ -7,7 +7,7 @@ This is a Next.js application designed for testing internet speed. It integrates
 - **Speed Test**: Measure your internet connection's download speed, upload speed, and ping latency.
 - **Real-time Progress**: See the test progress as it happens.
 - **Test History**: (Requires authentication) View a history of your past speed test results.
-- **User Authentication**: Sign in to save your test results and access personalized features.
+- **User Authentication**: Sign in with GitHub to save your test results and access personalized features.
 - **Admin Panel**: (For authenticated users with admin roles) Manage articles and view system statistics.
 - **Responsive Design**: Optimized for various screen sizes.
 - **Dark Mode**: Toggle between light and dark themes.
@@ -15,7 +15,7 @@ This is a Next.js application designed for testing internet speed. It integrates
 ## Technologies Used
 
 - **Next.js 14**: React framework for building full-stack web applications.
-- **React**: Frontend library for building user interfaces.
+- **TypeScript**: Strictly typed superset of JavaScript.
 - **Tailwind CSS**: Utility-first CSS framework for rapid styling.
 - **shadcn/ui**: Reusable UI components built with Radix UI and Tailwind CSS.
 - **Prisma**: Next-generation ORM for Node.js and TypeScript.
@@ -24,6 +24,12 @@ This is a Next.js application designed for testing internet speed. It integrates
 - **Vercel Blob**: For storing user-uploaded content (if implemented).
 
 ## Getting Started
+
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables (see .env.example)
+4. Run database migrations: `npx prisma migrate dev`
+5. Start the development server: `npm run dev`
 
 First, run the development server:
 
@@ -63,18 +69,18 @@ yarn install
 Create a `.env.local` file in the root of your project and add the following environment variables:
 
 \`\`\`env
-DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
-NEXTAUTH_SECRET="YOUR_NEXTAUTH_SECRET"
-NEXTAUTH_URL="http://localhost:3000" # Or your deployment URL
-GOOGLE_CLIENT_ID="YOUR_GOOGLE_CLIENT_ID"
-GOOGLE_CLIENT_SECRET="YOUR_GOOGLE_CLIENT_SECRET"
-SPEEDTEST_API_TOKEN="YOUR_FAST_SPEEDTEST_API_TOKEN" # Optional, but recommended for fast-speedtest-api
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-secret-here"
+GITHUB_CLIENT_ID="your-github-client-id"
+GITHUB_CLIENT_SECRET="your-github-client-secret"
+SPEEDTEST_API_TOKEN="your-speedtest-token"
 \`\`\`
 
--   **`DATABASE_URL`**: Your PostgreSQL database connection string.
+-   **`DATABASE_URL`**: Your PostgreSQL database connection string or a local file path.
 -   **`NEXTAUTH_SECRET`**: A random string used to encrypt NextAuth.js sessions. You can generate one using `openssl rand -base64 32`.
 -   **`NEXTAUTH_URL`**: The URL of your application.
--   **`GOOGLE_CLIENT_ID`**, **`GOOGLE_CLIENT_SECRET`**: Credentials for Google authentication (if you enable it).
+-   **`GITHUB_CLIENT_ID`**, **`GITHUB_CLIENT_SECRET`**: Credentials for GitHub authentication.
 -   **`SPEEDTEST_API_TOKEN`**: An optional token for `fast-speedtest-api`. You can get one from their website if you need higher rate limits or specific features.
 
 ### 4. Set up your database

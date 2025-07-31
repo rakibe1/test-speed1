@@ -1,9 +1,10 @@
 "use client"
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { GithubIcon } from "lucide-react"
+import { useState } from "react"
 import { signIn } from "next-auth/react"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Github } from "lucide-react"
 
 interface SignInModalProps {
   open: boolean
@@ -11,19 +12,30 @@ interface SignInModalProps {
 }
 
 export function SignInModal({ open, onOpenChange }: SignInModalProps) {
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSignIn = async (provider: string) => {
+    setIsLoading(true)
+    try {
+      await signIn(provider, { callbackUrl: "/" })
+    } catch (error) {
+      console.error("Sign in error:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign In to Save History</DialogTitle>
-          <DialogDescription>
-            Sign in with your GitHub account to save your speed test results and view your history.
-          </DialogDescription>
+          <DialogTitle>Sign In</DialogTitle>
+          <DialogDescription>Choose your preferred method to sign in to your account.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <Button variant="outline" className="w-full bg-transparent" onClick={() => signIn("github")}>
-            <GithubIcon className="mr-2 h-5 w-5" />
-            Sign in with GitHub
+          <Button variant="outline" onClick={() => handleSignIn("github")} disabled={isLoading} className="w-full">
+            <Github className="mr-2 h-4 w-4" />
+            Continue with GitHub
           </Button>
         </div>
       </DialogContent>

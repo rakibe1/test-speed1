@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
-import SignInClientPage from "./SignInClientPage"
 import { authOptions } from "@/lib/auth"
+import { SignInModal } from "@/components/auth/signin-modal"
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -17,5 +17,9 @@ export default async function SignInPage() {
     redirect("/dashboard")
   }
 
-  return <SignInClientPage />
+  return (
+    <div className="flex min-h-[calc(100vh-64px-64px)] items-center justify-center p-4">
+      <SignInModal open={true} onOpenChange={() => {}} />
+    </div>
+  )
 }

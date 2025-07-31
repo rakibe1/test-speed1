@@ -1,17 +1,18 @@
 # Next.js
 .next/
-out/
+/out/
 /build
 
 # Node.js
-node_modules/
+/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Prisma
-prisma/dev.db
-prisma/migrations
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/migrations
 
 # Environment variables
 .env
@@ -19,12 +20,13 @@ prisma/migrations
 
 # TypeScript
 *.tsbuildinfo
+next-env.d.ts
 
 # VS Code
 .vscode/
 
 # npm packages
-package-lock.json
+.yarn/install-state.gz
 
 # Logs
 logs/
